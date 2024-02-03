@@ -1,10 +1,63 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"time"
+)
+
+func registerFont(memory []byte, startAddr int) {
+  font := []byte{
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80,  // F
+  }
+
+  for i, f := range font {
+    memory[i + startAddr] = f
+  }
+}
+
+func startTimer(timerName string, timer *uint8) { 
+  for *timer > uint8(0) {
+    *timer -= 1
+    time.Sleep(16 * time.Millisecond)
+    fmt.Println(timerName, *timer)
+  }
+  *timer = math.MaxUint8
+}
 
 func main() {
-  var name = "Caio"
-  test := "this is a nice test"
-  fmt.Println("Hello World " + name + " " + test)
+  var memory [4096]byte
+  // var display [64][32]byte
+  // var pc *uint16
+  // var l *uint8
+  // var stack []uint16
+  var delayTimer uint8 = math.MaxUint8
+  var soundTimer uint8 = math.MaxUint8 
+  // var registers [16]uint8
+
+  // Font runs from addr 050 to 09F
+  registerFont(memory[:], 0x50)
+
+  // timers at 60Hz run concurrently to the main thread
+  go startTimer("delay", &delayTimer) 
+  go startTimer("sound", &soundTimer) 
+
+
+  time.Sleep(10 * time.Second)
 }
 
