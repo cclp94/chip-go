@@ -2,38 +2,9 @@ package main
 
 import (
   "fmt"
-  "math"
   "os"
   "time"
 )
-
-
-type Timer struct {
-  duration uint8
-  tickHz int
-}
-
-func CreateTimer() *Timer {
-  t := Timer{duration: math.MaxUint8, tickHz: 60}
-  return &t
-}
-
-func (t *Timer) Reset () {
-  t.duration = math.MaxUint8
-
-}
-
-
-func (t *Timer) Start() {
-  go func() {
-    tick := time.Duration(1000 / t.tickHz)
-    for t.duration > uint8(0) {
-      t.duration -= 1
-      time.Sleep(tick * time.Millisecond)
-      fmt.Println(t.duration)
-    }
-  }()
-}
 
 
 func registerRom(romPath string, memory []byte) {
@@ -73,11 +44,8 @@ func registerFont(memory []byte) {
 }
 
 
+func chip8(memory []byte) (func(), func()) {
 
-func main() {
-  romArg := os.Args[1]
-
-  var memory [4096]byte
   // var display [64][32]byte
   var pc int = 0x200
   //var l *uint8
@@ -86,14 +54,80 @@ func main() {
   //var soundTimer *Timer = CreateTimer() 
   // var registers [16]uint8
 
+  fetchInstruction := func () uint16 {
+    instruction := uint16(memory[pc])<<8 | uint16(memory[pc+1])
+    fmt.Printf("fetch instruction =0x%04X\n", instruction)
+    pc += 2
+    return instruction
+  }
+
+  decodeInstruction := func () {
+    // Binary mask first hex nibble
+    switch instruction & 0xf000 {
+    case 0x0:
+      println("decoded: 0")
+      switch instruction & 0x00ff {
+      case 0xE0:
+        // TODO Clear screen
+      case 0xEE:
+        // TODO pop from stack and set PC
+      }
+    case 0x1:
+      println("decoded: 1")
+      addr := instruction & 0x0fff
+      // TODO Set pc to addr
+    case 0x2:
+      println("decoded: 2")
+      addr := instruction & 0x0fff
+      // TODO Push PC to stack
+
+      // TODO Set PC to addr
+    case 0x3:
+      println("decoded: 3")
+    case 0x4:
+      println("decoded: 4")
+    case 0x5:
+      println("decoded: 5")
+    case 0x6:
+      println("decoded: 6")
+    case 0x7:
+      println("decoded: 7")
+    case 0x8:
+      println("decoded: 8")
+    case 0x9:
+      println("decoded: 9")
+    case 0xa:
+      println("decoded: a")
+    case 0xb:
+      println("decoded: b")
+    case 0xc:
+      println("decoded: c")
+    case 0xd:
+      println("decoded: d")
+    case 0xe:
+      println("decoded: e")
+    case 0xf:
+      println("decoded: f")
+    }
+  }
+
+  return fetchInstruction, decodeIsntruction
+
+}
+func main() {
+  romArg := os.Args[1]
+
+  var memory [4096]byte
+
+
   // Font runs from addr 050 to 09F
   registerFont(memory[0x50:])
   registerRom(romArg, memory[0x200:])
   tick, _ := time.ParseDuration("1.5ms")
-  
+
   for pc < len(memory) - 2 { 
-    instruction := uint16(memory[pc])<<8 | uint16(memory[pc+1])
-    fmt.Printf("n =0x%04X = %d\n", instruction, instruction)
+    instruction := fetchInstruction(&pc, memory[:])
+    decode(instruction)
     pc += 2
     time.Sleep(tick) 
   }
