@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"sync/atomic"
 	"time"
@@ -212,15 +213,70 @@ func chip8(
       NNN := instruction & 0x0fff
       l = uint8(NNN)
     case 0xb:
-      fmt.Println("decoded: b")
+      fmt.Println("Exec BNNN")
+      NNN := instruction & 0x0fff
+      pc = NNN + uint16(V[0])
     case 0xc:
-      fmt.Println("decoded: c")
+      fmt.Println("Exec CXNN")
+      X := getNibbleAt(instruction, 1)
+      NN := instruction & 0x00ff
+      random := uint16(rand.Intn(int(NN))) & NN
+      V[X] = uint8(random)
     case 0xd:
-      fmt.Println("decoded: d")
+      fmt.Printf("Exec %04X\n", instruction)
     case 0xe:
-      fmt.Println("decoded: e")
+      switch instruction & 0x00ff {
+      case 0x9E:
+        fmt.Println("Exec EX9E")
+        // TODO skip pc if key in VX is pressed
+      case 0xA1:
+        fmt.Println("Exec EXA1")
+        //TODO skip pc if key in VX is not pressed
+      }
     case 0xf:
-      fmt.Println("decoded: f")
+      X := instruction & getNibbleAt(instruction, 1)
+      switch instruction & 0x00ff {
+      // Timers
+      case 0x07:
+        fmt.Println("Exec FX07")
+        V[X] = uint8(delayTimer.Load())
+      case 0x15:
+        fmt.Println("Exec FX15")
+        delayTimer.Add(int64(V[X]))
+      case 0x18:
+        fmt.Println("Exec FX18")
+        soundTimer.Add(int64(V[X]))
+      case 0x1E:
+        fmt.Println("Exec FX1E")
+        l = V[X]
+      case 0x0A:
+        fmt.Println("Exec FX0A")
+        // TODO block until a key is pressed and then store key in VX
+        // pc -= 2
+      case 0x29:
+        fmt.Println("Exec FX29")
+        // set l to the last nibble of VX + the offset of the font stored in memory. l points to the address of the font character
+        l = 0x50 + V[X] & 0x0f
+      case 0x33:
+        fmt.Println("Exec FX33")
+        n := V[X]
+        c3 := n % 10
+        c2 := (c3 / 10) % 10
+        c1 := (c2 / 10) % 10
+        memory[l] = c1
+        memory[l + 1] = c2
+        memory[l + 2] = c3
+      case 0x55:
+        fmt.Println("Exec FX55")
+        for i,v := range V[:X+1] {
+          memory[uint16(l) + uint16(i)] = v
+        }
+      case 0x65:
+        fmt.Println("Exec FX65")
+        for i,v := range memory[l:uint16(l)+uint16(X)+1] {
+          V[i] = v
+        }
+      }
     }
   }
 
@@ -249,7 +305,7 @@ func parseArgs(args []string) (string, bool){
   }
   return filename, isLegacy
 }
-func main() {
+func main2() {
   filename, isLegacy := parseArgs(os.Args)
 
   var memory [4096]byte
