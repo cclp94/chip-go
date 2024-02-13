@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync/atomic"
 	"time"
+
+	"github.com/gopxl/pixel/pixelgl"
 )
 
 
@@ -47,23 +49,56 @@ func registerFont(memory []byte) {
 
 
 func getNibbleAt(value uint16, at int) uint16 {
- return uint16((value & (0xf000 >> (at))) >> ((at + 3) * 4))
+ return uint16((value & (0xf000 >> (at * 4))) >> ((3 - at) * 4))
+}
+
+func getBitAt(value uint8, at int) uint8 {
+  return (value & (0x80 >> at)) >> (7 - at) 
 }
 
 func chip8(
   memory []byte,
   delayTimer *atomic.Int64,
   soundTimer *atomic.Int64,
+  displayChan *chan [][]byte,
   isLegacy bool,
 ) {
 
   var pc uint16 = 0x200
-  var l uint8
+  var l uint16
   var stack []uint16
 
   var V [16]uint8
 
-  fmt.Println(l)
+  var vDisplay [][]byte = make([][]byte, 64)
+  for r := range vDisplay {
+    vDisplay[r] = make([]byte, 32)
+  }
+  
+  refreshDisplay := func (xCoord uint8, yCoord uint8, spriteCoord int, N int) {
+    V[15] = 0
+    for i := 0; i < int(N); i++ {
+      sprite := memory[spriteCoord + i]  
+      // for each bit in the sprite with 1 byte so start at 10000000 and shift right until 1 
+      for j, x := 0, xCoord; j < 8; j, x = j+1, x+1 {
+        pixel := getBitAt(uint8(sprite), j)
+        vPixel := vDisplay[x][yCoord]
+        vDisplay[x][yCoord] = vPixel ^ pixel
+        // fmt.Printf("p: %X, vp: %X, d: %X", pixel, vPixel, vDisplay[xCoord][yCoord])
+        if vPixel == 1 {
+          V[15] = 1
+        } 
+        // TODO stop if 63
+        if x >= 63 {
+          return
+        }
+      }
+      yCoord += 1
+      if yCoord >= 32 {
+        return
+      }
+    }
+  }
 
   fetchInstruction := func () uint16 {
     instruction := uint16(memory[pc])<<8 | uint16(memory[pc+1])
@@ -73,12 +108,14 @@ func chip8(
 
   decodeInstruction := func (instruction uint16) {
     // Binary mask first hex nibble
+    fmt.Printf("Instruction: %X\t", instruction)
     switch getNibbleAt(instruction, 0) {
     case 0x0:
       fmt.Println("decoded: 0")
       switch instruction & 0x00ff {
       case 0xE0:
         // TODO Clear screen
+
       case 0xEE:
         fmt.Println("Exec 00EE")
         toPopAtIndex := len(stack) - 1
@@ -209,9 +246,9 @@ func chip8(
         pc += 2
       }
     case 0xa:
-      fmt.Println("Exec ANNN")
       NNN := instruction & 0x0fff
-      l = uint8(NNN)
+      fmt.Printf("Exec ANNN, point to %X", memory[NNN])
+      l = uint16(NNN)
     case 0xb:
       fmt.Println("Exec BNNN")
       NNN := instruction & 0x0fff
@@ -224,6 +261,12 @@ func chip8(
       V[X] = uint8(random)
     case 0xd:
       fmt.Printf("Exec %04X\n", instruction)
+      X := getNibbleAt(instruction, 1)
+      Y := getNibbleAt(instruction, 2)
+      N := getNibbleAt(instruction, 3)
+      fmt.Println(X, Y, N)
+      refreshDisplay(V[X] % 64, V[Y] % 32, int(l), int(N))
+      *displayChan <- vDisplay
     case 0xe:
       switch instruction & 0x00ff {
       case 0x9E:
@@ -236,7 +279,7 @@ func chip8(
     case 0xf:
       X := instruction & getNibbleAt(instruction, 1)
       switch instruction & 0x00ff {
-      // Timers
+        // Timers
       case 0x07:
         fmt.Println("Exec FX07")
         V[X] = uint8(delayTimer.Load())
@@ -248,7 +291,7 @@ func chip8(
         soundTimer.Add(int64(V[X]))
       case 0x1E:
         fmt.Println("Exec FX1E")
-        l = V[X]
+        l = uint16(V[X])
       case 0x0A:
         fmt.Println("Exec FX0A")
         // TODO block until a key is pressed and then store key in VX
@@ -256,7 +299,7 @@ func chip8(
       case 0x29:
         fmt.Println("Exec FX29")
         // set l to the last nibble of VX + the offset of the font stored in memory. l points to the address of the font character
-        l = 0x50 + V[X] & 0x0f
+        l = uint16(0x50 + V[X] & 0x0f)
       case 0x33:
         fmt.Println("Exec FX33")
         n := V[X]
@@ -305,17 +348,20 @@ func parseArgs(args []string) (string, bool){
   }
   return filename, isLegacy
 }
-func main2() {
+func main() {
   filename, isLegacy := parseArgs(os.Args)
 
   var memory [4096]byte
   var delayTimer *atomic.Int64 = timer()
   var soundTimer *atomic.Int64 = timer() 
 
+  displayChan := make(chan [][]byte)
   // Font runs from addr 050 to 09F
   registerFont(memory[0x50:])
   registerRom(filename, memory[0x200:])
-  
-  chip8(memory[:], delayTimer, soundTimer, isLegacy)
+
+  fmt.Println(memory)
+  go chip8(memory[:], delayTimer, soundTimer, &displayChan, isLegacy)
+  pixelgl.Run(display(&displayChan))
 }
 
