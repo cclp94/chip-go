@@ -71,7 +71,7 @@ func parseArgs(args []string) (string, bool){
 }
 
 func main() {
-  filename, isLegacy := parseArgs(os.Args)
+  filename, _ := parseArgs(os.Args)
 
   var memory [4096]byte
   var delayTimer *atomic.Int64 = timer()
@@ -83,7 +83,7 @@ func main() {
   registerRom(filename, memory[0x200:])
 
   fmt.Println(memory)
-  go chip8(memory[:], delayTimer, soundTimer, &displayChan, isLegacy)
+  go chip8(memory[:], delayTimer, soundTimer, &displayChan, true)
   pixelgl.Run(display(&displayChan))
 }
 

@@ -61,11 +61,11 @@ func (c *Chip8) refreshDisplay (xCoord uint8, yCoord uint8, spriteCoord int, N i
       } 
       // TODO stop if 63
       if x >= 63 {
-        return
+        break
       }
     }
     yCoord += 1
-    if yCoord >= 32 {
+    if yCoord >= 31 {
       return
     }
   }
@@ -159,20 +159,23 @@ func (c *Chip8) decodeInstruction (instruction uint16, delayTimer *atomic.Int64,
       fmt.Println("Exec  8XY4")
       X := getNibbleAt(instruction, 1)
       Y := getNibbleAt(instruction, 2)
-      if int(c.V[X])+int(c.V[Y]) > 255 {
+      vx := c.V[X]
+      vy := c.V[Y]
+
+      c.V[X] = vx + vy
+      if int(vx)+int(vy) > 255 {
         c.V[15] = 1 
       } else {
         c.V[15] = 0
       }
-      c.V[X] = c.V[X] + c.V[Y]
     case 0x5:
       fmt.Println("Exec  8XY5")
       X := getNibbleAt(instruction, 1)
       Y := getNibbleAt(instruction, 2)
       if c.V[X] > c.V[Y] {
-        c.V[15] = 0 
+        c.V[15] = 1 
       } else {
-        c.V[15] = 1
+        c.V[15] = 0
       }
       c.V[X] =  c.V[X] - c.V[Y]
     case 0x6:
@@ -261,7 +264,7 @@ func (c *Chip8) decodeInstruction (instruction uint16, delayTimer *atomic.Int64,
       soundTimer.Add(int64(c.V[X]))
     case 0x1E:
       fmt.Println("Exec FX1E")
-      c.l = uint16(c.V[X])
+      c.l += uint16(c.V[X])
     case 0x0A:
       fmt.Println("Exec FX0A")
       // TODO block until a key is pressed and then store key in c.V[X]
