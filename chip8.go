@@ -174,12 +174,12 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 			Y := getNibbleAt(instruction, 2)
 			vx := c.V[X]
 			vy := c.V[Y]
-			c.V[X] = vx - vy
 			if vx > vy {
 				c.V[15] = 1
 			} else {
 				c.V[15] = 0
 			}
+			c.V[X] = vx - vy
 		case 0x6:
 			fmt.Println("Exec  8XY6")
 			X := getNibbleAt(instruction, 1)
@@ -198,7 +198,7 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 			vx := c.V[X]
 			vy := c.V[Y]
 			c.V[X] = vy - vx
-			if vx > vy {
+			if vy > vx {
 				c.V[15] = 1
 			} else {
 				c.V[15] = 0
