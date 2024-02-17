@@ -8,6 +8,7 @@ import (
 func testOp(opcode uint16, r1 uint8, r2 uint8) (Chip8, [16]uint8) {
 	var mockTimer atomic.Int64
 	mockDisplayChan := make(chan [][]byte)
+	mockKeyBoardChan := make(chan byte)
 
 	c := Chip8{
 		memory:   make([]byte, 4096),
@@ -16,7 +17,7 @@ func testOp(opcode uint16, r1 uint8, r2 uint8) (Chip8, [16]uint8) {
 	c.V[0] = r1
 	c.V[1] = r2
 
-	c.decodeInstruction(opcode, &mockTimer, &mockTimer, &mockDisplayChan)
+	c.decodeInstruction(opcode, &mockTimer, &mockTimer, &mockDisplayChan, &mockKeyBoardChan)
 
 	return c, c.V
 }

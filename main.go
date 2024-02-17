@@ -44,43 +44,20 @@ func registerFont(memory []byte) {
 	}
 }
 
-func getNibbleAt(value uint16, at int) uint16 {
-	return uint16((value & (0xf000 >> (at * 4))) >> ((3 - at) * 4))
-}
-
-func getBitAt(value uint8, at int) uint8 {
-	return (value & (0x80 >> at)) >> (7 - at)
-}
-
-func parseArgs(args []string) (string, bool) {
-	var filename string
-	var isLegacy bool
-
-	if len(args) < 2 {
-		fmt.Println("USAGE: <rom-file> [--legacy]")
-		panic(1)
-	}
-	filename = args[1]
-
-	if len(args) == 3 && args[2] == "--legacy" {
-		isLegacy = true
-	}
-	return filename, isLegacy
-}
-
 func main() {
 	filename, _ := parseArgs(os.Args)
 
 	var memory [4096]byte
 	var delayTimer *atomic.Int64 = timer()
 	var soundTimer *atomic.Int64 = soundTimer()
-
 	displayChan := make(chan [][]byte)
+	keyboardChan := make(chan byte, 1000)
+
 	// Font runs from addr 050 to 09F
 	registerFont(memory[0x50:])
+	// Rom starts at 0x200
 	registerRom(filename, memory[0x200:])
 
-	fmt.Println(memory)
-	go chip8(memory[:], delayTimer, soundTimer, &displayChan, true)
-	pixelgl.Run(display(&displayChan))
+	go chip8(memory[:], delayTimer, soundTimer, &displayChan, &keyboardChan, true)
+	pixelgl.Run(display(&displayChan, &keyboardChan))
 }
