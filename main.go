@@ -50,14 +50,14 @@ func main() {
 	var memory [4096]byte
 	var delayTimer *atomic.Int64 = timer()
 	var soundTimer *atomic.Int64 = soundTimer()
+	var kb keyboardInteface = &keyboard{}
 	displayChan := make(chan [][]byte)
-	keyboardChan := make(chan byte, 1000)
 
 	// Font runs from addr 050 to 09F
 	registerFont(memory[0x50:])
 	// Rom starts at 0x200
 	registerRom(filename, memory[0x200:])
 
-	go chip8(memory[:], delayTimer, soundTimer, &displayChan, &keyboardChan, false)
-	pixelgl.Run(display(&displayChan, &keyboardChan))
+	go chip8(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
+	pixelgl.Run(display(&displayChan, kb))
 }

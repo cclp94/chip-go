@@ -29,7 +29,7 @@ func timer() *atomic.Int64 {
 // TODO wrap sound lib in separate component
 func soundTimer() *atomic.Int64 {
 	t := timer()
-	f, err := os.Open("./assets/beep.mp3")
+	f, err := os.Open("./assets/beep2.mp3")
 	if err != nil {
 		fmt.Println("Failed to open beep sound")
 		panic(1)

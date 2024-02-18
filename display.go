@@ -14,10 +14,10 @@ const (
 	scale float64 = 10
 )
 
-func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
+func display(drawingChan *chan [][]byte, kb keyboardInteface) func() {
 	return func() {
 		cfg := pixelgl.WindowConfig{
-			Title:  "Pixel Rocks!",
+			Title:  "CHIP-8",
 			Bounds: pixel.R(0, 0, 64*scale, 32*scale),
 			VSync:  true,
 		}
@@ -31,46 +31,15 @@ func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
 		var (
 			frames = 0
 			fps    = time.Tick(16 * time.Millisecond)
-      second = time.Tick(time.Second)
+			second = time.Tick(time.Second)
 		)
 
 		imd := imdraw.New(nil)
 		imd.Color = colornames.Darkgreen
 
 		for !win.Closed() {
-			if win.Pressed(pixelgl.Key1) {
-				*keyboardChan <- 0x1
-			} else if win.Repeated(pixelgl.Key2) {
-				*keyboardChan <- 0x2
-			} else if win.Pressed(pixelgl.Key3) {
-				*keyboardChan <- 0x3
-			} else if win.Pressed(pixelgl.Key4) {
-				*keyboardChan <- 0xc
-			} else if win.Pressed(pixelgl.KeyQ) {
-				*keyboardChan <- 0x4
-			} else if win.Pressed(pixelgl.KeyW) {
-				*keyboardChan <- 0x5
-			} else if win.Pressed(pixelgl.KeyE) {
-				*keyboardChan <- 0x6
-			} else if win.Pressed(pixelgl.KeyR) {
-				*keyboardChan <- 0xd
-			} else if win.Pressed(pixelgl.KeyA) {
-				*keyboardChan <- 0x7
-			} else if win.Pressed(pixelgl.KeyS) {
-				*keyboardChan <- 0x8
-			} else if win.Pressed(pixelgl.KeyD) {
-				*keyboardChan <- 0x9
-			} else if win.Pressed(pixelgl.KeyF) {
-				*keyboardChan <- 0xe
-			} else if win.Pressed(pixelgl.KeyZ) {
-				*keyboardChan <- 0xa
-			} else if win.Pressed(pixelgl.KeyX) {
-				*keyboardChan <- 0x0
-			} else if win.Pressed(pixelgl.KeyC) {
-				*keyboardChan <- 0xb
-			} else if win.Pressed(pixelgl.KeyV) {
-				*keyboardChan <- 0xf
-			}
+			checkKeyPress(win, kb)
+			checkKeyRelease(win, kb)
 
 			win.Clear(colornames.Black)
 			select {
@@ -89,8 +58,110 @@ func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
 				frames = 0
 			default:
 			}
-      <-fps
+			<-fps
 		}
+	}
+}
+
+func checkKeyRelease(win *pixelgl.Window, kb keyboardInteface) {
+	if win.JustReleased(pixelgl.Key1) {
+		kb.ReleaseKey(0x1)
+	}
+	if win.JustReleased(pixelgl.Key2) {
+		kb.ReleaseKey(0x2)
+	}
+	if win.JustReleased(pixelgl.Key3) {
+		kb.ReleaseKey(0x3)
+	}
+	if win.JustReleased(pixelgl.Key4) {
+		kb.ReleaseKey(0xc)
+	}
+	if win.JustReleased(pixelgl.KeyQ) {
+		kb.ReleaseKey(0x4)
+	}
+	if win.JustReleased(pixelgl.KeyW) {
+		kb.ReleaseKey(0x5)
+	}
+	if win.JustReleased(pixelgl.KeyE) {
+		kb.ReleaseKey(0x6)
+	}
+	if win.JustReleased(pixelgl.KeyR) {
+		kb.ReleaseKey(0xd)
+	}
+	if win.JustReleased(pixelgl.KeyA) {
+		kb.ReleaseKey(0x7)
+	}
+	if win.JustReleased(pixelgl.KeyS) {
+		kb.ReleaseKey(0x8)
+	}
+	if win.JustReleased(pixelgl.KeyD) {
+		kb.ReleaseKey(0x9)
+	}
+	if win.JustReleased(pixelgl.KeyF) {
+		kb.ReleaseKey(0xe)
+	}
+	if win.JustReleased(pixelgl.KeyZ) {
+		kb.ReleaseKey(0xa)
+	}
+	if win.JustReleased(pixelgl.KeyX) {
+		kb.ReleaseKey(0x0)
+	}
+	if win.JustReleased(pixelgl.KeyC) {
+		kb.ReleaseKey(0xb)
+	}
+	if win.JustReleased(pixelgl.KeyV) {
+		kb.ReleaseKey(0xf)
+	}
+}
+
+func checkKeyPress(win *pixelgl.Window, kb keyboardInteface) {
+	if win.JustPressed(pixelgl.Key1) {
+		kb.PressKey(0x1)
+	}
+	if win.JustPressed(pixelgl.Key2) {
+		kb.PressKey(0x2)
+	}
+	if win.JustPressed(pixelgl.Key3) {
+		kb.PressKey(0x3)
+	}
+	if win.JustPressed(pixelgl.Key4) {
+		kb.PressKey(0xc)
+	}
+	if win.JustPressed(pixelgl.KeyQ) {
+		kb.PressKey(0x4)
+	}
+	if win.JustPressed(pixelgl.KeyW) {
+		kb.PressKey(0x5)
+	}
+	if win.JustPressed(pixelgl.KeyE) {
+		kb.PressKey(0x6)
+	}
+	if win.JustPressed(pixelgl.KeyR) {
+		kb.PressKey(0xd)
+	}
+	if win.JustPressed(pixelgl.KeyA) {
+		kb.PressKey(0x7)
+	}
+	if win.JustPressed(pixelgl.KeyS) {
+		kb.PressKey(0x8)
+	}
+	if win.JustPressed(pixelgl.KeyD) {
+		kb.PressKey(0x9)
+	}
+	if win.JustPressed(pixelgl.KeyF) {
+		kb.PressKey(0xe)
+	}
+	if win.JustPressed(pixelgl.KeyZ) {
+		kb.PressKey(0xa)
+	}
+	if win.JustPressed(pixelgl.KeyX) {
+		kb.PressKey(0x0)
+	}
+	if win.JustPressed(pixelgl.KeyC) {
+		kb.PressKey(0xb)
+	}
+	if win.JustPressed(pixelgl.KeyV) {
+		kb.PressKey(0xf)
 	}
 }
 
@@ -101,7 +172,6 @@ func toImdraw(pixelDisplay [][]byte, imd *imdraw.IMDraw, win *pixelgl.Window) {
 				nY := 31 - y
 				imd.Push(pixel.V(float64(x)*scale, float64(nY)*scale), pixel.V(float64(x+1)*scale, float64(nY+1)*scale))
 				imd.Rectangle(0)
-				// time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}

@@ -22,7 +22,7 @@ func chip8(
 	delayTimer *atomic.Int64,
 	soundTimer *atomic.Int64,
 	displayChan *chan [][]byte,
-	keyboardChan *chan byte,
+	kb keyboardInteface,
 	isLegacy bool,
 ) {
 	c := Chip8{
@@ -35,7 +35,7 @@ func chip8(
 	tick := time.Tick(time.Second / 750)
 	for {
 		instruction := c.fetchInstruction()
-		c.decodeInstruction(instruction, delayTimer, soundTimer, displayChan, keyboardChan)
+		c.decodeInstruction(instruction, delayTimer, soundTimer, displayChan, kb)
 		<-tick
 	}
 }
@@ -55,7 +55,7 @@ func (c *Chip8) refreshDisplay(xCoord uint8, yCoord uint8, spriteCoord int, N in
 		for j, x := 0, xCoord; j < 8; j, x = j+1, x+1 {
 			pixel := getBitAt(uint8(sprite), j)
 			vPixel := c.vDisplay[x][yCoord]
-			c.vDisplay[x][yCoord] =  pixel ^ vPixel
+			c.vDisplay[x][yCoord] = pixel ^ vPixel
 			// log.Printf("p: %X, vp: %X, d: %X", pixel, vPixel, vDisplay[xCoord][yCoord])
 			if vPixel == 1 {
 				c.V[15] = 1
@@ -77,7 +77,7 @@ func (c *Chip8) fetchInstruction() uint16 {
 	return instruction
 }
 
-func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, soundTimer *atomic.Int64, displayChan *chan [][]byte, keyboardChan *chan byte) {
+func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, soundTimer *atomic.Int64, displayChan *chan [][]byte, kb keyboardInteface) {
 	// Binary mask first hex nibble
 	log.Printf("Instruction: %X\t", instruction)
 	switch getNibbleAt(instruction, 0) {
@@ -249,24 +249,15 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 		case 0x9E:
 			log.Println("Exec EX9E")
 			// TODO skip pc if key in c.V[X] is pressed
-			select {
-			case k := <-*keyboardChan:
-				if k == c.V[X] {
-					c.pc += 2
-				}
-			default:
-			}
+      if kb.IsKeyPressed(c.V[X]) {
+        c.pc += 2
+      }
 		case 0xA1:
 			log.Println("Exec EXA1")
 			//TODO skip pc if key in c.V[X] is not pressed
-			select {
-			case k := <-*keyboardChan:
-				if k != c.V[X] {
-					c.pc += 2
-				}
-			default:
-				c.pc += 2
-			}
+      if !kb.IsKeyPressed(c.V[X]) {
+        c.pc += 2
+      }
 		}
 	case 0xf:
 		X := getNibbleAt(instruction, 1)
@@ -287,12 +278,12 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 		case 0x0A:
 			log.Println("Exec FX0A")
 			// TODO block until a key is pressed and then store key in c.V[X]
-			select {
-			case k := <-*keyboardChan:
-				c.V[X] = k
-			default:
+      keyPressed, ok := kb.GetTopKeyPressed()
+      if ok {
+				c.V[X] = keyPressed
+      } else {
 				c.pc -= 2
-			}
+      }
 		case 0x29:
 			log.Println("Exec FX29")
 			// set c.l to the c.last nibble of c.V[X] + the offset of the font stored in memory. c.l points to the address of the font character
