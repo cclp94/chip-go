@@ -55,7 +55,7 @@ func (c *Chip8) refreshDisplay(xCoord uint8, yCoord uint8, spriteCoord int, N in
 		for j, x := 0, xCoord; j < 8; j, x = j+1, x+1 {
 			pixel := getBitAt(uint8(sprite), j)
 			vPixel := c.vDisplay[x][yCoord]
-			c.vDisplay[x][yCoord] = vPixel ^ pixel
+			c.vDisplay[x][yCoord] =  pixel ^ vPixel
 			// log.Printf("p: %X, vp: %X, d: %X", pixel, vPixel, vDisplay[xCoord][yCoord])
 			if vPixel == 1 {
 				c.V[15] = 1
@@ -174,12 +174,12 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 			Y := getNibbleAt(instruction, 2)
 			vx := c.V[X]
 			vy := c.V[Y]
-			if vx > vy {
+			c.V[X] = vx - vy
+			if vx >= vy {
 				c.V[15] = 1
 			} else {
 				c.V[15] = 0
 			}
-			c.V[X] = vx - vy
 		case 0x6:
 			log.Println("Exec  8XY6")
 			X := getNibbleAt(instruction, 1)
@@ -198,7 +198,7 @@ func (c *Chip8) decodeInstruction(instruction uint16, delayTimer *atomic.Int64, 
 			vx := c.V[X]
 			vy := c.V[Y]
 			c.V[X] = vy - vx
-			if vy > vx {
+			if vy >= vx {
 				c.V[15] = 1
 			} else {
 				c.V[15] = 0

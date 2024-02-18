@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	scale float64 = 20
+	scale float64 = 10
 )
 
 func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
@@ -30,11 +30,13 @@ func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
 
 		var (
 			frames = 0
-			second = time.Tick(time.Second)
+			fps    = time.Tick(16 * time.Millisecond)
+      second = time.Tick(time.Second)
 		)
 
 		imd := imdraw.New(nil)
 		imd.Color = colornames.Darkgreen
+
 		for !win.Closed() {
 			if win.Pressed(pixelgl.Key1) {
 				*keyboardChan <- 0x1
@@ -87,6 +89,7 @@ func display(drawingChan *chan [][]byte, keyboardChan *chan byte) func() {
 				frames = 0
 			default:
 			}
+      <-fps
 		}
 	}
 }

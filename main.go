@@ -58,6 +58,6 @@ func main() {
 	// Rom starts at 0x200
 	registerRom(filename, memory[0x200:])
 
-	go chip8(memory[:], delayTimer, soundTimer, &displayChan, &keyboardChan, true)
+	go chip8(memory[:], delayTimer, soundTimer, &displayChan, &keyboardChan, false)
 	pixelgl.Run(display(&displayChan, &keyboardChan))
 }
