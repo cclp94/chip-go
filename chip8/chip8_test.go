@@ -1,25 +1,27 @@
-package main
+package chip8
 
 import (
 	"sync/atomic"
 	"testing"
+
+	"github.com/cclp94/chip-go/io/keyboard"
 )
 
-func testOp(opcode uint16, r1 uint8, r2 uint8) (Chip8, [16]uint8) {
+func testOp(opcode uint16, r1 uint8, r2 uint8) (chip8, [16]uint8) {
 	var mockTimer atomic.Int64
 	mockDisplayChan := make(chan [][]byte)
-	mockKeyboard := keyboard{}
+	mockKeyboard := keyboard.Create()
 
-	c := Chip8{
+	c := chip8{
 		memory:   make([]byte, 4096),
 		isLegacy: true,
 	}
-	c.V[0] = r1
-	c.V[1] = r2
+	c.registers[0] = r1
+	c.registers[1] = r2
 
-	c.decodeInstruction(opcode, &mockTimer, &mockTimer, &mockDisplayChan, &mockKeyboard)
+	c.decodeOpcode(opcode, &mockTimer, &mockTimer, &mockDisplayChan, mockKeyboard)
 
-	return c, c.V
+	return c, c.registers
 }
 
 func Test_8XY1(t *testing.T) {
@@ -97,14 +99,14 @@ func Test_8XY6(t *testing.T) {
 
 func Test_FXNN(t *testing.T) {
 	c, _ := testOp(0xF033, 0x68, 0x0)
-	if c.memory[c.l] != 1 {
-		t.Fatalf("Failed first digit. Expected %d, got %d", 1, c.memory[c.l])
+	if c.memory[c.i] != 1 {
+		t.Fatalf("Failed first digit. Expected %d, got %d", 1, c.memory[c.i])
 	}
-	if c.memory[c.l+1] != 0 {
-		t.Fatalf("Failed first digit. Expected %d, got %d", 0, c.memory[c.l+1])
+	if c.memory[c.i+1] != 0 {
+		t.Fatalf("Failed first digit. Expected %d, got %d", 0, c.memory[c.i+1])
 	}
-	if c.memory[c.l+2] != 4 {
-		t.Fatalf("Failed first digit. Expected %d, got %d", 4, c.memory[c.l+2])
+	if c.memory[c.i+2] != 4 {
+		t.Fatalf("Failed first digit. Expected %d, got %d", 4, c.memory[c.i+2])
 	}
 
 }

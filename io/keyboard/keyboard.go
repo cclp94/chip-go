@@ -1,4 +1,4 @@
-package main
+package keyboard
 
 import (
 	"log"
@@ -11,17 +11,20 @@ type keyboard struct {
 	mu          sync.Mutex
 }
 
-type keyboardInteface interface {
+type KeyboardInteface interface {
 	PressKey(k byte)
 	ReleaseKey(k byte)
 	IsKeyPressed(k byte) bool
 	GetTopKeyPressed() (byte, bool)
 }
 
+func Create() KeyboardInteface {
+	return &keyboard{}
+}
+
 func (kb *keyboard) PressKey(key byte) {
 	kb.mu.Lock()
 	if !slices.Contains(kb.pressedKeys, key) {
-		log.Println("keyboard:", kb.pressedKeys)
 		kb.pressedKeys = append(kb.pressedKeys, key)
 	}
 	kb.mu.Unlock()

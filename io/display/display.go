@@ -1,9 +1,10 @@
-package main
+package display
 
 import (
 	"fmt"
 	"time"
 
+	"github.com/cclp94/chip-go/io/keyboard"
 	"github.com/gopxl/pixel"
 	"github.com/gopxl/pixel/imdraw"
 	"github.com/gopxl/pixel/pixelgl"
@@ -14,8 +15,8 @@ const (
 	scale float64 = 10
 )
 
-func display(drawingChan *chan [][]byte, kb keyboardInteface) func() {
-	return func() {
+func Start(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) {
+	display := func() {
 		cfg := pixelgl.WindowConfig{
 			Title:  "CHIP-8",
 			Bounds: pixel.R(0, 0, 64*scale, 32*scale),
@@ -30,8 +31,8 @@ func display(drawingChan *chan [][]byte, kb keyboardInteface) func() {
 
 		var (
 			frames = 0
-			fps    = time.Tick(16 * time.Millisecond)
-			second = time.Tick(time.Second)
+			fps    = time.NewTicker(1 * time.Millisecond).C
+			second = time.NewTicker(time.Second).C
 		)
 
 		imd := imdraw.New(nil)
@@ -61,9 +62,10 @@ func display(drawingChan *chan [][]byte, kb keyboardInteface) func() {
 			<-fps
 		}
 	}
+	pixelgl.Run(display)
 }
 
-func checkKeyRelease(win *pixelgl.Window, kb keyboardInteface) {
+func checkKeyRelease(win *pixelgl.Window, kb keyboard.KeyboardInteface) {
 	if win.JustReleased(pixelgl.Key1) {
 		kb.ReleaseKey(0x1)
 	}
@@ -114,7 +116,7 @@ func checkKeyRelease(win *pixelgl.Window, kb keyboardInteface) {
 	}
 }
 
-func checkKeyPress(win *pixelgl.Window, kb keyboardInteface) {
+func checkKeyPress(win *pixelgl.Window, kb keyboard.KeyboardInteface) {
 	if win.JustPressed(pixelgl.Key1) {
 		kb.PressKey(0x1)
 	}

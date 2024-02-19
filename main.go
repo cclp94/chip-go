@@ -5,7 +5,11 @@ import (
 	"os"
 	"sync/atomic"
 
-	"github.com/gopxl/pixel/pixelgl"
+	"github.com/cclp94/chip-go/chip8"
+	"github.com/cclp94/chip-go/io/display"
+	"github.com/cclp94/chip-go/io/keyboard"
+	"github.com/cclp94/chip-go/timer"
+	"github.com/cclp94/chip-go/utils"
 )
 
 func registerRom(romPath string, memory []byte) {
@@ -45,12 +49,12 @@ func registerFont(memory []byte) {
 }
 
 func main() {
-	filename, _ := parseArgs(os.Args)
+	filename, _ := utils.ParseArgs(os.Args)
 
 	var memory [4096]byte
-	var delayTimer *atomic.Int64 = timer()
-	var soundTimer *atomic.Int64 = soundTimer()
-	var kb keyboardInteface = &keyboard{}
+	var delayTimer *atomic.Int64 = timer.Timer()
+	var soundTimer *atomic.Int64 = timer.SoundTimer()
+	var kb keyboard.KeyboardInteface = keyboard.Create()
 	displayChan := make(chan [][]byte)
 
 	// Font runs from addr 050 to 09F
@@ -58,6 +62,6 @@ func main() {
 	// Rom starts at 0x200
 	registerRom(filename, memory[0x200:])
 
-	go chip8(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
-	pixelgl.Run(display(&displayChan, kb))
+	go chip8.Start(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
+	display.Start(&displayChan, kb)
 }

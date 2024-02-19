@@ -1,4 +1,4 @@
-package main
+package timer
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 	"github.com/gopxl/beep/speaker"
 )
 
-func timer() *atomic.Int64 {
+func Timer() *atomic.Int64 {
 	var timer atomic.Int64
 
 	go func() {
-		tick := time.Tick(17 * time.Millisecond)
+		tick := time.NewTicker(17 * time.Millisecond).C
 		for {
 			if timer.Load() > 0 {
 				timer.Add(-1)
@@ -27,8 +27,8 @@ func timer() *atomic.Int64 {
 }
 
 // TODO wrap sound lib in separate component
-func soundTimer() *atomic.Int64 {
-	t := timer()
+func SoundTimer() *atomic.Int64 {
+	t := Timer()
 	f, err := os.Open("./assets/beep2.mp3")
 	if err != nil {
 		fmt.Println("Failed to open beep sound")
