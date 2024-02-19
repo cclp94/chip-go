@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"sync/atomic"
 
 	"github.com/cclp94/chip-go/chip8"
@@ -11,6 +13,55 @@ import (
 	"github.com/cclp94/chip-go/timer"
 	"github.com/cclp94/chip-go/utils"
 )
+
+func getRoms(path string) []string {
+	var files []string
+	roms, err := os.ReadDir(path)
+	if err != nil {
+		log.Fatalln("Could not open roms directory")
+	}
+	for _, rom := range roms {
+		file, err := rom.Info()
+		if err != nil {
+			log.Fatalln("Could not open rom file")
+			continue
+		}
+
+		if file.IsDir() {
+			files = append(files, getRoms(path+"/"+file.Name())...)
+			continue
+		}
+
+		if name, found := strings.CutSuffix(file.Name(), ".ch8"); !found {
+			log.Println("Rom not compatible:", name)
+			continue
+		}
+
+		files = append(files, path+"/"+file.Name())
+	}
+	return files
+}
+
+func main() {
+	filename, _ := utils.ParseArgs(os.Args)
+	const BASE_PATH = "./roms"
+	files := getRoms(BASE_PATH)
+	log.Println(files)
+
+	var memory [4096]byte
+	var delayTimer *atomic.Int64 = timer.Timer()
+	var soundTimer *atomic.Int64 = timer.SoundTimer()
+	var kb keyboard.KeyboardInteface = keyboard.Create()
+	displayChan := make(chan [][]byte)
+
+	// Font runs from addr 050 to 09F
+	registerFont(memory[0x50:])
+	// Rom starts at 0x200
+	registerRom(filename, memory[0x200:])
+
+	go chip8.Start(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
+	display.Start(&displayChan, kb)
+}
 
 func registerRom(romPath string, memory []byte) {
 	file, err := os.ReadFile(romPath)
@@ -46,22 +97,4 @@ func registerFont(memory []byte) {
 	for i, f := range font {
 		memory[i] = f
 	}
-}
-
-func main() {
-	filename, _ := utils.ParseArgs(os.Args)
-
-	var memory [4096]byte
-	var delayTimer *atomic.Int64 = timer.Timer()
-	var soundTimer *atomic.Int64 = timer.SoundTimer()
-	var kb keyboard.KeyboardInteface = keyboard.Create()
-	displayChan := make(chan [][]byte)
-
-	// Font runs from addr 050 to 09F
-	registerFont(memory[0x50:])
-	// Rom starts at 0x200
-	registerRom(filename, memory[0x200:])
-
-	go chip8.Start(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
-	display.Start(&displayChan, kb)
 }

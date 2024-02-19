@@ -8,7 +8,9 @@ import (
 	"github.com/gopxl/pixel"
 	"github.com/gopxl/pixel/imdraw"
 	"github.com/gopxl/pixel/pixelgl"
+	"github.com/gopxl/pixel/text"
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 )
 
 const (
@@ -31,18 +33,25 @@ func Start(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) {
 
 		var (
 			frames = 0
-			fps    = time.NewTicker(1 * time.Millisecond).C
+			fps    = time.NewTicker(1000 * time.Millisecond).C
 			second = time.NewTicker(time.Second).C
 		)
 
 		imd := imdraw.New(nil)
 		imd.Color = colornames.Darkgreen
 
+		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+		basicTxt := text.New(pixel.V(0, 0), basicAtlas)
+
+		basicTxt.Color = colornames.Red
+		fmt.Fprintln(basicTxt, "Hello, text!")
+
 		for !win.Closed() {
 			checkKeyPress(win, kb)
 			checkKeyRelease(win, kb)
 
 			win.Clear(colornames.Black)
+			basicTxt.Draw(win, pixel.IM.Scaled(basicTxt.Orig, 4))
 			select {
 			case d := <-*drawingChan:
 				imd.Clear()
