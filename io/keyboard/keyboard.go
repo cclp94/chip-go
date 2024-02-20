@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+
 type keyboard struct {
 	pressedKeys []byte
 	mu          sync.Mutex
@@ -19,6 +20,7 @@ type KeyboardInteface interface {
 }
 
 func Create() KeyboardInteface {
+
 	return &keyboard{}
 }
 

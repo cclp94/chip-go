@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/cclp94/chip-go/chip8"
-	"github.com/cclp94/chip-go/io/display"
+	"github.com/cclp94/chip-go/display"
 	"github.com/cclp94/chip-go/io/keyboard"
 	"github.com/cclp94/chip-go/timer"
 	"github.com/cclp94/chip-go/utils"
