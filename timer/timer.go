@@ -43,9 +43,8 @@ func SoundTimer() *atomic.Int64 {
 	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
 
 	go func() {
-		// done := make(chan bool)
 		defer streamer.Close()
-		ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamer), Paused: true}
+		ctrl := &beep.Ctrl{Streamer: beep.Loop(-1, streamer), Paused: false}
 		speaker.Play(ctrl)
 		for {
 			if t.Load() > 0 {

@@ -2,7 +2,6 @@ package display
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	keyboard "github.com/cclp94/chip-go/io/keyboard"
@@ -21,12 +20,15 @@ type external struct {
 }
 
 
-func Init(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) (func(), chan string) {
+func Init(
+  drawingChan *chan [][]byte, 
+  kb keyboard.KeyboardInteface,
+) (func(), chan string) {
   _e := external{
     drawingChan: drawingChan,
     kb: kb,
   }
-  selectionChan := make(chan string, 2)
+  selectionChan := make(chan string)
 
 	display := func() {
 		cfg := pixelgl.WindowConfig{
@@ -48,24 +50,23 @@ func Init(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) (func(), cha
     )
 
     gs := createGameScene(win, &_e) 
-    ss := createSelectScene(win, selectionChan)
+    ss := createSelectScene(win)
     currentScene := ss
     
+    gs.RegisterCallback(func(args ...string) {
+      currentScene = ss
+    })
+
+    ss.RegisterCallback(func(args ...string) {
+      currentScene = gs
+      selection := args[0]
+      selectionChan <- selection
+    })
+
     for !win.Closed() {
       win.Clear(colornames.Black)
       currentScene.Draw()
       win.Update()
-
-      if currentScene == ss {
-        select {
-        case selection, done := <- selectionChan:
-          log.Println(selection, done)
-          // TODO code a way to make backspace go back to selection
-          currentScene = gs
-        default:
-        }
-
-      }
 
       // FPS control
       frames++

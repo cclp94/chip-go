@@ -16,10 +16,13 @@ type gameScene struct {
 
   e *external
   imd *imdraw.IMDraw 
+
+  doneCallback func(args ...string)
 }
 
 type Scene interface {
   Draw()
+  RegisterCallback(callback func(args ...string))
 }
 
 func createGameScene(win *pixelgl.Window, e *external) Scene {
@@ -29,10 +32,19 @@ func createGameScene(win *pixelgl.Window, e *external) Scene {
   return &gs
 }
 
+func (gs *gameScene) RegisterCallback(fn func(args ...string)) {
+  gs.doneCallback = fn
+}
+
 func (gs *gameScene) Draw() {
   win, e := gs.win, gs.e
   checkKeyPress(win, e)
   checkKeyRelease(win, e)
+  
+  if win.JustPressed(pixelgl.KeyEscape) {
+   gs.doneCallback() 
+  }
+
   select {
   case d := <- *e.drawingChan:
     gs.imd.Clear()

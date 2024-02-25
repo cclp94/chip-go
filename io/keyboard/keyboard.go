@@ -20,7 +20,6 @@ type KeyboardInteface interface {
 }
 
 func Create() KeyboardInteface {
-
 	return &keyboard{}
 }
 

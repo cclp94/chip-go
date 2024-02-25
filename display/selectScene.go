@@ -27,10 +27,10 @@ type selectScene struct{
   _shownPage int
 
 
-  selectionChan chan string
+  callbackFn func(args ...string)
 }
 
-func createSelectScene(win *pixelgl.Window, selectionChan chan string) Scene {
+func createSelectScene(win *pixelgl.Window) Scene {
   roms := getAllFiles("./roms")
   basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 
@@ -41,11 +41,14 @@ func createSelectScene(win *pixelgl.Window, selectionChan chan string) Scene {
     availableSelection: roms,
     basicTxt: basicTxt,
     _shownPage: -1,
-    selectionChan: selectionChan,
   }
   ss.nextPage()
 
   return ss 
+}
+
+func (ss * selectScene) RegisterCallback(fn func(args ...string)) {
+  ss.callbackFn = fn
 }
 
 func (ss *selectScene) Draw() {
@@ -55,8 +58,7 @@ func (ss *selectScene) Draw() {
 
 func (ss *selectScene) Done(selection int) {
   log.Printf("Selected %d: %s", selection, ss.availableSelection[selection])
-  ss.selectionChan <- ss.availableSelection[selection] 
-  close(ss.selectionChan)
+  ss.callbackFn(ss.availableSelection[selection])
 }
 
 func (ss *selectScene) checkKeyboardInput() {
