@@ -34,7 +34,7 @@ func Init(
 		cfg := pixelgl.WindowConfig{
 			Title:  "CHIP-8",
 			Bounds: pixel.R(0, 0, 64*scale, 32*scale),
-			VSync:  true,
+			VSync:  false,
 		}
 		win, err := pixelgl.NewWindow(cfg)
 		if err != nil {

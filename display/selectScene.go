@@ -62,7 +62,6 @@ func (ss *selectScene) Done(selection int) {
 }
 
 func (ss *selectScene) checkKeyboardInput() {
-  // TODO backspace goes to previous page
   typed := ss.win.Typed()
   if len(typed) > 0 {
     selection, err := ss.toSelection(typed)
