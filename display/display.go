@@ -21,12 +21,13 @@ type external struct {
 }
 
 
-func Start(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) {
+func Init(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) (func(), chan string) {
   _e := external{
     drawingChan: drawingChan,
     kb: kb,
   }
-  log.Println(_e)
+  selectionChan := make(chan string, 2)
+
 	display := func() {
 		cfg := pixelgl.WindowConfig{
 			Title:  "CHIP-8",
@@ -42,29 +43,45 @@ func Start(drawingChan *chan [][]byte, kb keyboard.KeyboardInteface) {
 
 		var (
 			frames = 0
-			fps    = time.NewTicker(1 * time.Millisecond).C
+			fps    = time.NewTicker(16 * time.Millisecond).C
 			second = time.NewTicker(time.Second).C
-		)
+    )
 
-    // gs := initGameScene() 
-    ss := createSelectScene()
-		for !win.Closed() {
-			win.Clear(colornames.Black)
-      // gs.Draw(win,&_e)
-      ss.Draw(win)
-			win.Update()
+    gs := createGameScene(win, &_e) 
+    ss := createSelectScene(win, selectionChan)
+    currentScene := ss
+    
+    for !win.Closed() {
+      win.Clear(colornames.Black)
+      currentScene.Draw()
+      win.Update()
+
+      if currentScene == ss {
+        select {
+        case selection, done := <- selectionChan:
+          log.Println(selection, done)
+          // TODO code a way to make backspace go back to selection
+          currentScene = gs
+        default:
+        }
+
+      }
 
       // FPS control
-			frames++
-			select {
-			case <-second:
-				win.SetTitle(fmt.Sprintf("%s | FPS: %d", cfg.Title, frames))
-				frames = 0
-			default:
-			}
-			<-fps
-		}
-	}
-	pixelgl.Run(display)
+      frames++
+      select {
+      case <-second:
+        win.SetTitle(fmt.Sprintf("%s | FPS: %d", cfg.Title, frames))
+        frames = 0
+      default:
+      }
+      <-fps
+    }
+  }
+  start := func () {
+    pixelgl.Run(display)
+  }
+
+  return start, selectionChan
 }
 

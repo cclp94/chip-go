@@ -12,21 +12,25 @@ const (
 )
 
 type gameScene struct {
+  win *pixelgl.Window
+
+  e *external
   imd *imdraw.IMDraw 
 }
 
-type GameScene interface {
-  Draw(win *pixelgl.Window, e *external)
+type Scene interface {
+  Draw()
 }
 
-func initGameScene() GameScene {
+func createGameScene(win *pixelgl.Window, e *external) Scene {
   imd := imdraw.New(nil)
   imd.Color = colornames.Darkgreen
-  gs := gameScene{imd: imd}
+  gs := gameScene{win: win, imd: imd, e: e}
   return &gs
 }
 
-func (gs *gameScene) Draw(win *pixelgl.Window, e *external) {
+func (gs *gameScene) Draw() {
+  win, e := gs.win, gs.e
   checkKeyPress(win, e)
   checkKeyRelease(win, e)
   select {

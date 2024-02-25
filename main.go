@@ -9,7 +9,6 @@ import (
 	"github.com/cclp94/chip-go/display"
 	"github.com/cclp94/chip-go/io/keyboard"
 	"github.com/cclp94/chip-go/timer"
-	"github.com/cclp94/chip-go/utils"
 )
 
 func registerRom(romPath string, memory []byte) {
@@ -49,7 +48,7 @@ func registerFont(memory []byte) {
 }
 
 func main() {
-	filename, _ := utils.ParseArgs(os.Args)
+	// filename, _ := utils.ParseArgs(os.Args)
 
 	var memory [4096]byte
 	var delayTimer *atomic.Int64 = timer.Timer()
@@ -59,9 +58,13 @@ func main() {
 
 	// Font runs from addr 050 to 09F
 	registerFont(memory[0x50:])
-	// Rom starts at 0x200
-	registerRom(filename, memory[0x200:])
 
-	go chip8.Start(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
-	display.Start(&displayChan, kb)
+  start, onSelectRomChan := display.Init(&displayChan, kb)
+
+  go func() {
+    rom := <-onSelectRomChan
+    registerRom(rom, memory[0x200:])
+    chip8.Start(memory[:], delayTimer, soundTimer, &displayChan, kb, false)
+  }()
+  start()
 }
