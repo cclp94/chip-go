@@ -49,7 +49,7 @@ erDiagram
 ```
 
 ## Quick start
-This project uses the [gopxl/pixel](https://github.com/gopxl/pixel) lib, which uses OpenGL and GLFW. The requirements for building and execution the project depend on the underlying system. [Check here for setup in different systems](https://github.com/gopxl/pixel?tab=readme-ov-file#requirements)
+This project uses the [gopxl/pixel](https://github.com/gopxl/pixel) lib, which uses OpenGL and GLFW. The requirements for building and executing the project depend on the underlying system. For ubuntu and WSL (I'm guessing linux in general) simply install the following packages `libgl1-mesa-dev xorg-dev libasound2-dev` [Check here for setup in different systems](https://github.com/gopxl/pixel?tab=readme-ov-file#requirements)
 
 Once the requirements are installed:
 ```bash
