@@ -8,7 +8,7 @@ Thank you to Tobias Langhoff for the [awesome guide](https://tobiasvl.github.io/
 * 🖵 OpenGL rendering using [gopxl/pixel](https://github.com/gopxl/pixel)
 
 ## Demo
-<video src='assets/chip-go.mp4' type="video/mp4" autoplay></video>
+<img src="./assets/chip-go.gif" width=500>
 
 ## Architecture
 The goal for the architecture of the system was to make external dependencies as decoupled from the main interpreter logic as possible.
