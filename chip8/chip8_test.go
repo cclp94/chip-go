@@ -7,19 +7,26 @@ import (
 	"github.com/cclp94/chip-go/io/keyboard"
 )
 
-func testOp(opcode uint16, r1 uint8, r2 uint8) (chip8, [16]uint8) {
+func testOp(opcode uint16, r1 uint8, r2 uint8) (chip8, []uint8) {
 	var mockTimer atomic.Int64
 	mockDisplayChan := make(chan [][]byte)
 	mockKeyboard := keyboard.Create()
 
-	c := chip8{
-		memory:   make([]byte, 4096),
-		isLegacy: true,
-	}
+  var memory []byte = make([]byte, 4096)
+  c := chip8{
+    memory:   memory,
+    pc:       0x200,
+    registers: make([]uint8, 16),
+    displayChan: mockDisplayChan,
+    kb: mockKeyboard,
+    delayTimer: &mockTimer,
+    soundTimer: &mockTimer,
+    isLegacy: true,
+  }
 	c.registers[0] = r1
 	c.registers[1] = r2
 
-	c.decodeOpcode(opcode, &mockTimer, &mockTimer, &mockDisplayChan, mockKeyboard)
+	c.decodeOpcode(opcode)
 
 	return c, c.registers
 }
